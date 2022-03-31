@@ -1,14 +1,14 @@
 {
-  "name": "react-big-calendar",
-  "version": "0.40.0",
+  "name": "@noloco/react-big-calendar",
+  "version": "0.40.2",
   "description": "Calendar! with events",
   "author": {
-    "name": "Jason Quense",
-    "email": "monastic.panic@gmail.com"
+    "name": "Noloco",
+    "email": "eingineering@noloco.io"
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/jquense/react-big-calendar.git"
+    "url": "git+https://github.com/noloco-io/react-big-calendar.git"
   },
   "license": "MIT",
   "main": "lib/index.js",
@@ -129,7 +129,7 @@
     "uncontrollable": "^7.2.1"
   },
   "bugs": {
-    "url": "https://github.com/jquense/react-big-calendar/issues"
+    "url": "https://github.com/noloco-io/react-big-calendar/issues"
   },
-  "homepage": "https://github.com/jquense/react-big-calendar#readme"
+  "homepage": "https://github.com/noloco-io/react-big-calendar#readme"
 }

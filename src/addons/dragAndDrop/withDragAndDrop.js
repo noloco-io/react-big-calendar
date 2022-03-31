@@ -50,6 +50,16 @@ export default function withDragAndDrop(Calendar) {
       this.state = { interacting: false }
     }
 
+    componentDidUpdate(prevProps) {
+      if (prevProps.components !== this.props.components) {
+        this.components = mergeComponents(this.props.components, {
+          eventWrapper: EventWrapper,
+          eventContainerWrapper: EventContainerWrapper,
+          weekWrapper: WeekWrapper,
+        })
+      }
+    }
+
     getDnDContextValue() {
       return {
         draggable: {
