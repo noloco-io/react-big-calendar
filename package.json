@@ -1,10 +1,10 @@
 {
   "name": "@noloco/react-big-calendar",
-  "version": "0.40.2",
+  "version": "0.41.0",
   "description": "Calendar! with events",
   "author": {
     "name": "Noloco",
-    "email": "eingineering@noloco.io"
+    "email": "engineering@noloco.io"
   },
   "repository": {
     "type": "git",
