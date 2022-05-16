@@ -13,6 +13,7 @@ import TimeSlotGroup from './TimeSlotGroup'
 import TimeGridEvent from './TimeGridEvent'
 import { DayLayoutAlgorithmPropType } from './utils/propTypes'
 
+import CurrentTimeIndicator from './CurrentTimeIndicator'
 import DayColumnWrapper from './DayColumnWrapper'
 
 class DayColumn extends React.Component {
@@ -124,6 +125,9 @@ class DayColumn extends React.Component {
 
     const { className, style } = dayProp(max)
 
+    const CurrentTimeIndicatorComponent =
+      components.currentTimeIndicator || CurrentTimeIndicator
+
     const DayColumnWrapperComponent =
       components.dayColumnWrapper || DayColumnWrapper
 
@@ -173,9 +177,8 @@ class DayColumn extends React.Component {
           </div>
         )}
         {isNow && this.intervalTriggered && (
-          <div
-            className="rbc-current-time-indicator"
-            style={{ top: `${this.state.timeIndicatorPosition}%` }}
+          <CurrentTimeIndicatorComponent
+            position={this.state.timeIndicatorPosition}
           />
         )}
       </DayColumnWrapperComponent>
