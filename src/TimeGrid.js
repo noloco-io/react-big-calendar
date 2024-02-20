@@ -1,17 +1,19 @@
+import React, { Component, createRef } from 'react'
 import PropTypes from 'prop-types'
 import clsx from 'clsx'
 import * as animationFrame from 'dom-helpers/animationFrame'
-import React, { Component } from 'react'
-import { findDOMNode } from 'react-dom'
 import memoize from 'memoize-one'
 
 import DayColumn from './DayColumn'
 import TimeGutter from './TimeGutter'
+import TimeGridHeader from './TimeGridHeader'
+import PopOverlay from './PopOverlay'
 
 import getWidth from 'dom-helpers/width'
-import TimeGridHeader from './TimeGridHeader'
-import { notify } from './utils/helpers'
+import getPosition from 'dom-helpers/position'
+import { views } from './utils/constants'
 import { inRange, sortEvents } from './utils/eventLevels'
+import { notify } from './utils/helpers'
 import Resources from './utils/Resources'
 import { DayLayoutAlgorithmPropType } from './utils/propTypes'
 
@@ -23,20 +25,22 @@ export default class TimeGrid extends Component {
 
     this.scrollRef = React.createRef()
     this.contentRef = React.createRef()
+    this.containerRef = React.createRef()
     this._scrollRatio = null
+    this.gutterRef = createRef()
   }
 
-  UNSAFE_componentWillMount() {
-    this.calculateScroll()
+  getSnapshotBeforeUpdate() {
+    this.checkOverflow()
+    return null
   }
 
   componentDidMount() {
-    this.checkOverflow()
-
     if (this.props.width == null) {
       this.measureGutter()
     }
 
+    this.calculateScroll()
     this.applyScroll()
 
     window.addEventListener('resize', this.handleResize)
@@ -64,33 +68,51 @@ export default class TimeGrid extends Component {
   }
 
   componentDidUpdate() {
-    if (this.props.width == null) {
-      this.measureGutter()
-    }
-
     this.applyScroll()
-    //this.checkOverflow()
   }
 
-  UNSAFE_componentWillReceiveProps(nextProps) {
-    const { range, scrollToTime, localizer } = this.props
-    // When paginating, reset scroll
-    if (
-      localizer.neq(nextProps.range[0], range[0], 'minutes') ||
-      localizer.neq(nextProps.scrollToTime, scrollToTime, 'minutes')
-    ) {
-      this.calculateScroll(nextProps)
-    }
+  handleKeyPressEvent = (...args) => {
+    this.clearSelection()
+    notify(this.props.onKeyPressEvent, args)
   }
 
-  gutterRef = (ref) => {
-    this.gutter = ref && findDOMNode(ref)
-  }
-
-  handleSelectAlldayEvent = (...args) => {
+  handleSelectEvent = (...args) => {
     //cancel any pending selections so only the event click goes through.
     this.clearSelection()
     notify(this.props.onSelectEvent, args)
+  }
+
+  handleDoubleClickEvent = (...args) => {
+    this.clearSelection()
+    notify(this.props.onDoubleClickEvent, args)
+  }
+
+  handleShowMore = (events, date, cell, slot, target) => {
+    const {
+      popup,
+      onDrillDown,
+      onShowMore,
+      getDrilldownView,
+      doShowMoreDrillDown,
+    } = this.props
+    this.clearSelection()
+
+    if (popup) {
+      let position = getPosition(cell, this.containerRef.current)
+
+      this.setState({
+        overlay: {
+          date,
+          events,
+          position: { ...position, width: '200px' },
+          target,
+        },
+      })
+    } else if (doShowMoreDrillDown) {
+      notify(onDrillDown, [date, getDrilldownView(date) || views.DAY])
+    }
+
+    notify(onShowMore, [events, date, slot])
   }
 
   handleSelectAllDaySlot = (slots, slotInfo) => {
@@ -222,6 +244,7 @@ export default class TimeGrid extends Component {
           'rbc-time-view',
           resources && 'rbc-time-view-resources'
         )}
+        ref={this.containerRef}
       >
         <TimeGridHeader
           range={range}
@@ -231,6 +254,11 @@ export default class TimeGrid extends Component {
           getNow={getNow}
           localizer={localizer}
           selected={selected}
+          allDayMaxRows={
+            this.props.showAllEvents
+              ? Infinity
+              : this.props.allDayMaxRows ?? Infinity
+          }
           resources={this.memoizedResources(resources, accessors)}
           selectable={this.props.selectable}
           accessors={accessors}
@@ -240,13 +268,15 @@ export default class TimeGrid extends Component {
           isOverflowing={this.state.isOverflowing}
           longPressThreshold={longPressThreshold}
           onSelectSlot={this.handleSelectAllDaySlot}
-          onSelectEvent={this.handleSelectAlldayEvent}
+          onSelectEvent={this.handleSelectEvent}
+          onShowMore={this.handleShowMore}
           onDoubleClickEvent={this.props.onDoubleClickEvent}
           onKeyPressEvent={this.props.onKeyPressEvent}
           onDrillDown={this.props.onDrillDown}
           getDrilldownView={this.props.getDrilldownView}
           resizable={resizable}
         />
+        {this.props.popup && this.renderOverlay()}
         <div
           ref={this.contentRef}
           className="rbc-time-content"
@@ -276,6 +306,47 @@ export default class TimeGrid extends Component {
     )
   }
 
+  renderOverlay() {
+    let overlay = this.state?.overlay ?? {}
+    let {
+      accessors,
+      localizer,
+      components,
+      getters,
+      selected,
+      popupOffset,
+      handleDragStart,
+    } = this.props
+
+    const onHide = () => this.setState({ overlay: null })
+
+    return (
+      <PopOverlay
+        overlay={overlay}
+        accessors={accessors}
+        localizer={localizer}
+        components={components}
+        getters={getters}
+        selected={selected}
+        popupOffset={popupOffset}
+        ref={this.containerRef}
+        handleKeyPressEvent={this.handleKeyPressEvent}
+        handleSelectEvent={this.handleSelectEvent}
+        handleDoubleClickEvent={this.handleDoubleClickEvent}
+        handleDragStart={handleDragStart}
+        show={!!overlay.position}
+        overlayDisplay={this.overlayDisplay}
+        onHide={onHide}
+      />
+    )
+  }
+
+  overlayDisplay = () => {
+    this.setState({
+      overlay: null,
+    })
+  }
+
   clearSelection() {
     clearTimeout(this._selectTimer)
     this._pendingSelection = []
@@ -287,7 +358,9 @@ export default class TimeGrid extends Component {
     }
     this.measureGutterAnimationFrameRequest = window.requestAnimationFrame(
       () => {
-        const width = getWidth(this.gutter)
+        const width = this.gutterRef?.current
+          ? getWidth(this.gutterRef.current)
+          : undefined
 
         if (width && this.state.gutterWidth !== width) {
           this.setState({ gutterWidth: width })
@@ -309,7 +382,11 @@ export default class TimeGrid extends Component {
   calculateScroll(props = this.props) {
     const { min, max, scrollToTime, localizer } = props
 
-    const diffMillis = scrollToTime - localizer.startOf(scrollToTime, 'day')
+    const diffMillis = localizer.diff(
+      localizer.merge(scrollToTime, min),
+      scrollToTime,
+      'milliseconds'
+    )
     const totalMillis = localizer.diff(min, max, 'milliseconds')
 
     this._scrollRatio = diffMillis / totalMillis
@@ -319,6 +396,8 @@ export default class TimeGrid extends Component {
     if (this._updatingOverflow) return
 
     const content = this.contentRef.current
+
+    if (!content?.scrollHeight) return
     let isOverflowing = content.scrollHeight > content.clientHeight
 
     if (this.state.isOverflowing !== isOverflowing) {
@@ -359,6 +438,8 @@ TimeGrid.propTypes = {
   getters: PropTypes.object.isRequired,
   localizer: PropTypes.object.isRequired,
 
+  allDayMaxRows: PropTypes.number,
+
   selected: PropTypes.object,
   selectable: PropTypes.oneOf([true, false, 'ignoreEvents']),
   longPressThreshold: PropTypes.number,
@@ -368,12 +449,27 @@ TimeGrid.propTypes = {
   onSelectEnd: PropTypes.func,
   onSelectStart: PropTypes.func,
   onSelectEvent: PropTypes.func,
+  onShowMore: PropTypes.func,
   onDoubleClickEvent: PropTypes.func,
   onKeyPressEvent: PropTypes.func,
   onDrillDown: PropTypes.func,
   getDrilldownView: PropTypes.func.isRequired,
 
   dayLayoutAlgorithm: DayLayoutAlgorithmPropType,
+
+  showAllEvents: PropTypes.bool,
+  doShowMoreDrillDown: PropTypes.bool,
+
+  popup: PropTypes.bool,
+  handleDragStart: PropTypes.func,
+
+  popupOffset: PropTypes.oneOfType([
+    PropTypes.number,
+    PropTypes.shape({
+      x: PropTypes.number,
+      y: PropTypes.number,
+    }),
+  ]),
 }
 
 TimeGrid.defaultProps = {

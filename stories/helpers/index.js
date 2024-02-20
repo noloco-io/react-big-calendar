@@ -22,7 +22,9 @@ const localizer = momentLocalizer(moment)
 export const date = (...args) => moment(...args).toDate()
 
 export const Calendar = (props) => (
-  <BaseCalendar localizer={localizer} {...props} />
+  <div style={{ height: 650 }}>
+    <BaseCalendar localizer={localizer} {...props} />
+  </div>
 )
 
 export const DragAndDropCalendar = withDragAndDrop(Calendar)
@@ -87,5 +89,44 @@ export const backgroundEvents = [
     start: moment().startOf('day').add(2, 'hours').toDate(),
     end: moment().startOf('day').add(12, 'hours').toDate(),
     allDay: false,
+  },
+]
+
+export const resourceEvents = [
+  {
+    title: 'event 1',
+    start: moment().startOf('day').add(1, 'hours').toDate(),
+    end: moment().startOf('day').add(2, 'hours').toDate(),
+    allDay: false,
+    resourceId: 1,
+  },
+  {
+    title: 'event 2',
+    start: moment().startOf('day').add(3, 'hours').toDate(),
+    end: moment().startOf('day').add(4, 'hours').toDate(),
+    allDay: false,
+    resourceId: [1, 2],
+  },
+  {
+    title: 'event 3',
+    start: moment().startOf('day').add(1, 'hours').toDate(),
+    end: moment().startOf('day').add(3, 'hours').toDate(),
+    allDay: false,
+    resourceId: 3,
+  },
+]
+
+export const resources = [
+  {
+    id: 1,
+    name: 'Resource One',
+  },
+  {
+    id: 2,
+    name: 'Resource Two',
+  },
+  {
+    id: 3,
+    name: 'Resource Three',
   },
 ]

@@ -26,7 +26,16 @@ import mapValues from 'lodash/mapValues'
 import { wrapAccessor } from './utils/accessors'
 
 function viewNames(_views) {
-  return !Array.isArray(_views) ? Object.keys(_views) : _views
+  if (Array.isArray(_views)) {
+    return _views
+  }
+  const views = []
+  for (const [key, value] of Object.entries(_views)) {
+    if (value) {
+      views.push(key)
+    }
+  }
+  return views
 }
 
 function isValidView(view, { views: _views }) {
@@ -47,7 +56,7 @@ class Calendar extends React.Component {
      * const localizer = globalizeLocalizer(globalize)
      * ```
      * moment
-     * ```js
+     * ``js
      * import {momentLocalizer} from 'react-big-calendar'
      * import moment from 'moment'
      * // and, for optional time zone support
@@ -237,7 +246,7 @@ class Calendar extends React.Component {
     resources: PropTypes.arrayOf(PropTypes.object),
 
     /**
-     * Provides a unique identifier for each resource in the `resources` array
+     * Provides a unique identifier, or an array of unique identifiers, for each resource in the `resources` array
      *
      * ```js
      * string | (resource: Object) => any
@@ -569,7 +578,7 @@ class Calendar extends React.Component {
      * Optionally provide a function that returns an object of props to be applied
      * to the time-slot group node. Useful to dynamically change the sizing of time nodes.
      * ```js
-     * () => { style?: Object }
+     * (group: Date[]) => { style?: Object }
      * ```
      */
     slotGroupPropGetter: PropTypes.func,
@@ -593,6 +602,15 @@ class Calendar extends React.Component {
      * the week and day views.**
      */
     showMultiDayTimes: PropTypes.bool,
+
+    /**
+     * Determines a maximum amount of rows of events to display in the all day
+     * section for Week and Day views, will display `showMore` button if
+     * events excede this number.
+     *
+     * Defaults to `Infinity`
+     */
+    allDayMaxRows: PropTypes.number,
 
     /**
      * Constrains the minimum _time_ of the Day and Week views.
@@ -730,6 +748,7 @@ class Calendar extends React.Component {
      *   dateCellWrapper: MyDateCellWrapper,
      *   timeSlotWrapper: MyTimeSlotWrapper,
      *   timeGutterHeader: MyTimeGutterWrapper,
+     *   timeGutterWrapper: MyTimeGutterWrapper,
      *   resourceHeader: MyResourceHeader,
      *   currentTimeIndicator: MyCurrentTimeIndicator,
      *   toolbar: MyToolbar,
@@ -763,6 +782,7 @@ class Calendar extends React.Component {
       dayColumnWrapper: PropTypes.elementType,
       timeSlotWrapper: PropTypes.elementType,
       timeGutterHeader: PropTypes.elementType,
+      timeGutterWrapper: PropTypes.elementType,
       resourceHeader: PropTypes.elementType,
 
       currentTimeIndicator: PropTypes.elementType,
@@ -812,7 +832,7 @@ class Calendar extends React.Component {
      *
      *   noEventsInRange: 'There are no events in this range.',
      *
-     *   showMore: total => `+${total} more`,
+     *   showMore: total => `+ ${total} more`,
      * }
      *
      * <Calendar messages={messages} />
@@ -857,6 +877,7 @@ class Calendar extends React.Component {
     views: [views.MONTH, views.WEEK, views.DAY, views.AGENDA],
     step: 30,
     length: 30,
+    allDayMaxRows: Infinity,
 
     doShowMoreDrillDown: true,
     drilldownView: views.DAY,
@@ -880,14 +901,14 @@ class Calendar extends React.Component {
     super(...args)
 
     this.state = {
-      context: this.getContext(this.props),
+      context: Calendar.getContext(this.props),
     }
   }
-  UNSAFE_componentWillReceiveProps(nextProps) {
-    this.setState({ context: this.getContext(nextProps) })
+  static getDerivedStateFromProps(nextProps) {
+    return { context: Calendar.getContext(nextProps) }
   }
 
-  getContext({
+  static getContext({
     startAccessor,
     endAccessor,
     allDayAccessor,
@@ -933,6 +954,7 @@ class Calendar extends React.Component {
         dateCellWrapper: NoopWrapper,
         weekWrapper: NoopWrapper,
         timeSlotWrapper: NoopWrapper,
+        timeGutterWrapper: NoopWrapper,
       }),
       accessors: {
         start: wrapAccessor(startAccessor),
