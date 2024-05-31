@@ -29,7 +29,9 @@ export default function ({
     a = a.style
     b = b.style
     if (a.top !== b.top) return a.top > b.top ? 1 : -1
-    else return a.top + a.height < b.top + b.height ? 1 : -1
+    else if (a.height !== b.height)
+      return a.top + a.height < b.top + b.height ? 1 : -1
+    else return 0
   })
 
   for (let i = 0; i < styledEvents.length; ++i) {
@@ -50,8 +52,11 @@ export default function ({
       const y3 = se2.style.top
       const y4 = se2.style.top + se2.style.height
 
-      // be friends when overlapped
-      if ((y3 <= y1 && y1 < y4) || (y1 <= y3 && y3 < y2)) {
+      if (
+        (y3 >= y1 && y4 <= y2) ||
+        (y4 > y1 && y4 <= y2) ||
+        (y3 >= y1 && y3 < y2)
+      ) {
         // TODO : hashmap would be effective for performance
         se1.friends.push(se2)
         se2.friends.push(se1)

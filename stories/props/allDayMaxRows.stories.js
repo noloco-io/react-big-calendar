@@ -1,8 +1,8 @@
 import React from 'react'
 import moment from 'moment'
 import { Calendar, Views, momentLocalizer } from '../../src'
-import demoEvents from '../resources/events'
-import mdx from './scrollToTime.mdx'
+import allDayEvents from '../resources/allDayEvents'
+import mdx from './allDayMaxRows.mdx'
 
 const mLocalizer = momentLocalizer(moment)
 
@@ -11,10 +11,8 @@ export default {
   component: Calendar,
   argTypes: {
     localizer: { control: { type: null } },
-    defaultDate: { control: { type: null } },
-    defaultView: { control: { type: null } },
     events: { control: { type: null } },
-    scrollToTime: { control: { type: 'date' } },
+    defaultDate: { control: { type: null } },
   },
   parameters: {
     docs: {
@@ -29,12 +27,13 @@ const Template = (args) => (
   </div>
 )
 
-export const ScrollToTime = Template.bind({})
-ScrollToTime.storyName = 'scrollToTime'
-ScrollToTime.args = {
-  defaultDate: new Date(2015, 3, 13),
+export const AllDayMaxRows = Template.bind({})
+AllDayMaxRows.storyName = 'allDayMaxRows'
+AllDayMaxRows.args = {
+  defaultDate: new Date(2015, 3, 1),
   defaultView: Views.WEEK,
-  events: demoEvents,
+  events: allDayEvents,
   localizer: mLocalizer,
-  scrollToTime: new Date(1972, 0, 1, 22),
+  allDayMaxRows: 2,
+  popup: true,
 }

@@ -35,6 +35,7 @@ node_modules
 # Mac OS X
 .DS_Store
 
-# Storybook
-
-storybook-static/*
+# Yarn Cache
+.yarn
+# Yarn NodeLinker
+.yarnrc.yml
