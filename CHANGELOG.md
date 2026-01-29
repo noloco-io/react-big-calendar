@@ -1,3 +1,10 @@
+## [1.0.1](https://github.com/noloco-io/react-big-calendar/compare/v1.0.0...v1.0.1) (2026-01-29)
+
+
+### Bug Fixes
+
+* make semantic release work for chore commits ([#19](https://github.com/noloco-io/react-big-calendar/issues/19)) ([9054e6e](https://github.com/noloco-io/react-big-calendar/commit/9054e6e875fa27f329c4adde73f28cc04f6dd6a0))
+
 # [1.0.0](https://github.com/noloco-io/react-big-calendar/compare/v0.40.0...v1.0.0) (2024-05-31)
 
 
